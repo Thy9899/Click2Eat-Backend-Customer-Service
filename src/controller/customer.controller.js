@@ -82,9 +82,9 @@ const login = async (req, res) => {
         email: customer.email,
         username: customer.username,
         phone: customer.phone,
-        image: customer.image
-          ? `http://localhost:5002/Images/${customer.image}`
-          : null,
+        image: customer.image,
+        // ? `http://localhost:5002/Images/${customer.image}`
+        // : null,
       },
       token,
     });
@@ -109,9 +109,9 @@ const getProfile = async (req, res) => {
         email: customer.email,
         username: customer.username,
         phone: customer.phone,
-        image: customer.image
-          ? `http://localhost:5004/Images/${customer.image}`
-          : null,
+        image: customer.image,
+        // ? `http://localhost:5004/Images/${customer.image}`
+        // : null,
         createdAt: customer.createdAt,
       },
     });
@@ -148,9 +148,9 @@ const update = async (req, res) => {
         email: customer.email,
         username: customer.username,
         phone: customer.phone,
-        image: customer.image
-          ? `http://localhost:5004/Images/${customer.image}`
-          : null,
+        image: customer.image,
+        // ? `http://localhost:5004/Images/${customer.image}`
+        // : null,
       },
     });
   } catch (err) {
