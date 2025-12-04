@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const customerController = require("../controller/customer.controller");
 const authenticateToken = require("../middleware/authMiddleware");
+const authenticateTokenAdmin = require("../middleware/authMiddlewareAdmin");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
@@ -41,5 +42,7 @@ router.delete(
   authenticateToken,
   customerController.deleteProfile
 );
+
+router.get("/customer", authenticateTokenAdmin, customerController.getAll);
 
 module.exports = router;

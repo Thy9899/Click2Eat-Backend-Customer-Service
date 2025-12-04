@@ -175,4 +175,19 @@ const deleteProfile = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getProfile, update, deleteProfile };
+// GET all Customer (admin only)
+const getAll = async (req, res) => {
+  try {
+    if (!req.user?.is_admin) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const list = await Customer.find();
+    res.json({ success: true, list });
+  } catch (err) {
+    console.error("getAll Error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+module.exports = { register, login, getProfile, update, deleteProfile, getAll };
