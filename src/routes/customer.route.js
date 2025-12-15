@@ -4,33 +4,30 @@ const customerController = require("../controller/customer.controller");
 const authenticateToken = require("../middleware/authMiddleware");
 const authenticateTokenAdmin = require("../middleware/authMiddlewareAdmin");
 const multer = require("multer");
-// const path = require("path");
-// const fs = require("fs");
 
-// Ensure upload folder exists
-// const uploadDir = "./public/Images";
-// if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => cb(null, uploadDir),
-//   filename: (req, file, cb) => {
-//     const ext = path.extname(file.originalname);
-//     cb(null, Date.now() + "-" + file.fieldname + ext);
-//   },
-// });
-
-// const upload = multer({ storage });
-
+// =======================================
+// Use memory storage (no physical file created)
+// =======================================
 const upload = multer({ storage: multer.memoryStorage() });
 
-// AUTH
+// =======================================
+// CUTOMER REGISTER
+// =======================================
 router.post("/register", customerController.register);
+
+// =======================================
+// CUTOMER LOGIN
+// =======================================
 router.post("/login", customerController.login);
 
+// =======================================
 // PROFILE
+// =======================================
 router.get("/profile", authenticateToken, customerController.getProfile);
 
+// =======================================
 // UPDATE
+// =======================================
 router.put(
   "/profile/:id",
   authenticateToken,
@@ -38,13 +35,18 @@ router.put(
   customerController.update
 );
 
+// =======================================
 // DELETE
+// =======================================
 router.delete(
   "/profile/:id",
   authenticateToken,
   customerController.deleteProfile
 );
 
+// =======================================
+// GET ALL (Admin Only)
+// =======================================
 router.get("/customer", authenticateTokenAdmin, customerController.getAll);
 
 module.exports = router;

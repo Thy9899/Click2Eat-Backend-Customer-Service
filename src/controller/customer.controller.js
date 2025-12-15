@@ -7,7 +7,10 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 const JWT_EXPIRES = process.env.JWT_EXPIRES || "7d";
 const SALT_ROUNDS = 10;
 
-// Upload buffer to cloudinary
+/**
+ * Upload image buffer to Cloudinary
+ * @purpose Upload customer profile image
+ */
 const uploadToCloudinary = (fileBuffer) => {
   return new Promise((resolve, reject) => {
     cloudinary.uploader
@@ -18,16 +21,26 @@ const uploadToCloudinary = (fileBuffer) => {
       .end(fileBuffer);
   });
 };
+/* Explanation:
+ • Uploads customer profile images to Cloudinary
+ • Stores images inside "customer_profiles" folder
+ • Returns secure image URL */
 
-// REGISTER
+/**
+ * Register new customer
+ * @route POST /api/customers/register
+ * @access Public
+ */
 const register = async (req, res) => {
   try {
     const { email, username, password } = req.body;
 
+    // 1. Validate input
     if (!email || !username || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
+    // 2. Check if user already exists
     const exists = await Customer.findOne({
       $or: [{ email }, { username }],
     });
@@ -36,8 +49,10 @@ const register = async (req, res) => {
       return res.status(409).json({ message: "Customer already exists" });
     }
 
+    // 3. Hash password
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
+    // 4. Create customer
     const newCustomer = await Customer.create({
       email,
       username,
@@ -45,22 +60,41 @@ const register = async (req, res) => {
       image: null,
     });
 
+    // 5. Create JWT token
+    const token = jwt.sign(
+      { id: newCustomer._id, email: newCustomer.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // 6. Send response
     res.status(201).json({
-      message: "Customer registered successfully",
+      message: "Registration successful",
+      token,
       customer: {
-        customer_id: newCustomer._id,
+        id: newCustomer._id,
         email: newCustomer.email,
         username: newCustomer.username,
-        createdAt: newCustomer.createdAt,
+        image: newCustomer.image,
       },
     });
-  } catch (err) {
-    console.error("Register error:", err);
-    res.status(500).json({ error: "Internal server error" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// LOGIN
+/* Explanation:
+ • Handles customer registration
+ • Validates required input fields
+ • Hashes password before storing
+ • Prevents duplicate email or username */
+
+/**
+ * Customer login
+ * @route POST /api/customers/login
+ * @access Public
+ */
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -104,8 +138,17 @@ const login = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+/* Explanation:
+ • Authenticates customer credentials
+ • Compares hashed passwords securely
+ • Generates JWT token for authorization
+ • Returns customer information and token */
 
-// GET PROFILE
+/**
+ * Get customer profile
+ * @route GET /api/customers/profile
+ * @access Customer
+ */
 const getProfile = async (req, res) => {
   try {
     const customer = await Customer.findById(req.customer.customer_id).select(
@@ -130,8 +173,16 @@ const getProfile = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+/* Explanation:
+ • Retrieves authenticated customer profile
+ • Returns personal and profile information
+ • Ensures customer exists */
 
-// UPDATE PROFILE (with Cloudinary)
+/**
+ * Update customer profile
+ * @route PUT /api/customers/profile/:id
+ * @access Customer
+ */
 const update = async (req, res) => {
   try {
     const { id } = req.params;
@@ -146,7 +197,6 @@ const update = async (req, res) => {
     if (email) customer.email = email;
     if (phone) customer.phone = phone;
 
-    // Upload new image to cloudinary
     if (req.file) {
       const cloudinaryUrl = await uploadToCloudinary(req.file.buffer);
       customer.image = cloudinaryUrl;
@@ -169,8 +219,16 @@ const update = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+/* Explanation:
+ • Updates customer profile information
+ • Supports password and image updates
+ • Uploads new profile image to Cloudinary */
 
-// DELETE PROFILE
+/**
+ * Delete customer profile
+ * @route DELETE /api/customers/profile/:id
+ * @access Customer
+ */
 const deleteProfile = async (req, res) => {
   try {
     const { id } = req.params;
@@ -185,8 +243,16 @@ const deleteProfile = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+/* Explanation:
+ • Deletes customer account by ID
+ • Ensures customer exists
+ • Returns confirmation message */
 
-// GET all Customer (admin only)
+/**
+ * Get all customers
+ * @route GET /api/customers
+ * @access Admin
+ */
 const getAll = async (req, res) => {
   try {
     if (!req.user?.is_admin) {
@@ -200,5 +266,16 @@ const getAll = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+/* Explanation:
+ • Retrieves list of all customers
+ • Restricted to admin access only
+ • Returns customer data */
 
-module.exports = { register, login, getProfile, update, deleteProfile, getAll };
+module.exports = {
+  register,
+  login,
+  getProfile,
+  update,
+  deleteProfile,
+  getAll,
+};
